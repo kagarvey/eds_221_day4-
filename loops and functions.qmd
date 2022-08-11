@@ -86,3 +86,125 @@ means_over_columns <- function(df) {
 
 means_over_columns(df = mtcars)
 ```
+
+How do matrix get populated? by col or row first
+
+```{r}
+apples <- c(1,2,3,4)
+price <- c(7,10,25)
+
+fruit_out <- matrix(nrow = length(price), ncol = length(apples))
+
+for (i in seq_along(apples)) {
+ for (j in seq_along(price)) {
+  total_cost <- price[j] * apples[i]
+  fruit_out[j,i] <-total_cost
+ }
+}
+
+fruit_out
+
+
+```
+
+Logistic growth- modeling a population over time and varying growth rate
+
+```{r}
+## shortcut on mac command option x to populate functions 
+
+log_growth <- function(K, NO, r, time) {
+  K / (1 + ((K - NO) / NO) * exp(-r * time))
+}
+
+## test
+log_growth(K=5000, NO = 100, r= 0.07, time = 42)
+
+
+```
+
+```{r}
+time_vec <- seq(from=0, to= 35, by= 0.1)
+
+pop_35 <- log_growth(NO= 40, K=8000, r=0.1, time=time_vec)
+
+## combine time_vec and  into dataframe to plot
+
+pop_time35_df <- data.frame(time_vec, pop_35)
+
+
+ggplot(data = pop_time35_df, aes(x = time_vec, y = pop_35)) +
+  geom_line() +
+  theme_minimal()
+
+
+## changing r will change shape of graph
+```
+
+```{r}
+pop_35_vec <- vector(mode="numeric", length = length(time_vec))
+
+for (i in seq_along(time_vec)) {
+ population <- log_growth(NO = 100, K=6000, r=0.27, time=time_vec[i])
+ pop_35_vec[i] <- population
+}
+```
+
+Now extend this to iterate over multiple growth rates
+
+```{r}
+r_seq <- seq(from = 0.20, to = 0.4, by = 0.01)
+
+out_matrix <- matrix(nrow = length(time_vec), ncol = length(r_seq))
+
+## make for loop 
+for (i in seq_along(r_seq)) {
+ for (j in seq_along(time_vec)) {
+  pop <- log_growth(NO=100, K=6000, r= r_seq[i], time = time_vec[j])
+  out_matrix[j,i] <- pop
+ }
+}
+
+out_matrix
+
+## now some wrangling 
+
+logisitc_df <- data.frame(out_matrix, time = time_vec)
+
+## update column names to store new values
+colnames(logisitc_df) <- c(paste0("gr_", r_seq), "time")
+
+logisitc_df
+
+## pivot for better organization
+out_df_long <- logisitc_df %>% 
+  pivot_longer(cols = -time, names_to = "growth_rate", values_to = "population")
+
+ggplot(data = out_df_long, aes(x = time, y = population)) +
+  geom_line(aes(color = growth_rate)) +
+  theme_minimal()
+```
+
+```{r}
+### rho air density (kg/ m^3), a: area covered by turbine (square meters), v: wind velocity (m/s)
+ 0.3*rho*pi*(radius^2)*(windspeed^3)
+
+
+ calc_windpower <- function(rho, radius, windspeed) {
+  
+  if (windspeed > 130) {
+    warning("Whoa, that's a high windspeed! Are you sure that's correct?")
+  }
+  
+  if (rho > 1.225) {
+    warning("That air density is suspicious.")
+  }
+  
+  if (radius < 0) {
+    stop("Rotor radius must be a positive value (meters).")
+  }
+  
+  0.3*rho*pi*(radius^2)*(windspeed^3)
+  
+}
+
+```
